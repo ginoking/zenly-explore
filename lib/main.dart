@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
 import 'package:latlong2/latlong.dart';
+import 'newPainter.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,22 +34,22 @@ class MyApp extends StatelessWidget {
               // );
               return FlutterMap(
                 options: MapOptions(
-                    initialCenter: snapshot.data,
-                    initialZoom: 15.0,
-                    maxZoom: 20.0,
-                    minZoom: 5.0,
-                    cameraConstraint: CameraConstraint.containCenter(
-                      bounds: LatLngBounds(
-                        const LatLng(90.0, 180.0),
-                        const LatLng(-90.0, -180.0),
-                      ),
+                  initialCenter: snapshot.data,
+                  initialZoom: 15.0,
+                  maxZoom: 20.0,
+                  minZoom: 5.0,
+                  cameraConstraint: CameraConstraint.containCenter(
+                    bounds: LatLngBounds(
+                      const LatLng(90.0, 180.0),
+                      const LatLng(-90.0, -180.0),
                     ),
-                    // backgroundColor: Colors.black.withOpacity(0.5)
+                  ),
+                  // backgroundColor: Colors.black.withOpacity(0.5)
                 ),
                 children: [
-
                   TileLayer(
-                    urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                    urlTemplate:
+                        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
                     userAgentPackageName: 'dev.fleaflet.flutter_map.example',
                     // zoomReverse: true
                   ),
@@ -56,51 +57,63 @@ class MyApp extends StatelessWidget {
                   //   urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
                   //   // zoomReverse: true
                   // ),
-                  CircleLayer(
+                  // CircleLayer(
+                  //   circles: [
+                  //     CircleMarker(
+                  //         point: snapshot.data,
+                  //         radius: 1000,
+                  //         useRadiusInMeter: true,
+                  //         color: Colors.black.withOpacity(0.5)),
+                  //     CircleMarker(
+                  //         point: snapshot.data,
+                  //         radius: 100,
+                  //         useRadiusInMeter: true,
+                  //         color: Colors.white.withOpacity(0.5)),
+                  //   ],
+                  // ),
+                  // PolylineLayer(
+                  //   polylines: [
+                  //     Polyline(
+                  //       points: [
+                  //         snapshot.data,
+                  //         const LatLng(24.988166709962165, 121.31983249528967),
+                  //         const LatLng(24.988245114232143, 121.31972587749178)
+                  //       ],
+                  //       color: Colors.white.withOpacity(0.3),
+                  //     ),
+                  //   ],
+                  // ),
+                  CustomCircleLayer(
                     circles: [
                       CircleMarker(
                         point: snapshot.data,
-                        radius: 100000,
-                        // useRadiusInMeter: true,
-                        color: Colors.black.withOpacity(0.5)
-                      ),
+                        radius: 100,
+                        useRadiusInMeter: true,
+                        color: Colors.black
+                      )
                     ],
-                  ),
-                  CircleLayer(
-                    circles: [
+                    exceptCircles: [
                       CircleMarker(
                         point: snapshot.data,
                         radius: 10,
                         useRadiusInMeter: true,
-                        color: Colors.white.withOpacity(0.3)
+                        color: Colors.red
                       ),
-                      CircleMarker(
-                        point: const LatLng(24.988166709962165, 121.31983249528967),
-                        radius: 10,
-                        useRadiusInMeter: true,
-                        color: Colors.white.withOpacity(0.3)
-                      ),
-                      CircleMarker(
-                        point: const LatLng(24.988245114232143, 121.31972587749178),
-                        radius: 10,
-                        useRadiusInMeter: true,
-                        color: Colors.white.withOpacity(0.3)
-                      ),
-                    ],
+                    ]
                   ),
-                  CurrentLocationLayer(
-                    style: const LocationMarkerStyle(
-                      marker: DefaultLocationMarker(
-                        child: Icon(
-                          Icons.navigation,
-                          color: Colors.white,
-                          size: 20.0,
-                        ),
-                      ),
-                      markerSize: Size(30, 30),
-                      markerDirection: MarkerDirection.heading,
-                    ),
-                  )
+                  // CurrentLocationLayer(
+                  //   style: const LocationMarkerStyle(
+                  //     marker: DefaultLocationMarker(
+                  //       child: Icon(
+                  //         Icons.navigation,
+                  //         color: Colors.white,
+                  //         size: 20.0,
+                  //       ),
+                  //     ),
+                  //     markerSize: Size(30, 30),
+                  //     markerDirection: MarkerDirection.heading,
+                  //   ),
+                  // )
                 ],
               );
             }
@@ -108,7 +121,7 @@ class MyApp extends StatelessWidget {
               alignment: Alignment.center,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   CircularProgressIndicator(),
                   SizedBox(height: 8.0),
                   Text("初始化中，請稍候")
@@ -120,6 +133,35 @@ class MyApp extends StatelessWidget {
         // new LocationWidget(),
       ),
       // supportedLocales: const [Locale('zh', 'TW')],
+    );
+  }
+}
+
+class CustomCircleLayer extends CircleLayer {
+  final List<CircleMarker> exceptCircles;
+
+  const CustomCircleLayer({
+    super.key,
+    required super.circles,
+    super.hitNotifier,
+    this.exceptCircles = const [],
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final camera = MapCamera.of(context);
+
+    return MobileLayerTransformer(
+      child: CustomPaint(
+        painter: NewCirclePainter(
+          circles: circles,
+          exceptCircles: this.exceptCircles,
+          camera: camera,
+          hitNotifier: hitNotifier,
+        ),
+        size: Size(camera.size.x, camera.size.y),
+        isComplex: true,
+      ),
     );
   }
 }
@@ -162,7 +204,7 @@ Future<LatLng> _latlng() async {
     final position = await _determinePosition();
     return LatLng(position.latitude, position.longitude);
   } catch (e) {
-    return LatLng(23.973875, 120.982024);
+    return const LatLng(23.973875, 120.982024);
     // //如出現錯誤則跳出對話方塊提示使用者
     // late LatLng _latlng;
     // await showDialog(
@@ -251,4 +293,3 @@ Future<LatLng> _latlng() async {
 //   //   );
 //   // }
 // }
-
