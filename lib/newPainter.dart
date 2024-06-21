@@ -12,7 +12,7 @@ base class NewCirclePainter extends CirclePainter
     required super.circles,
     required super.camera,
     required super.hitNotifier,
-    this.exceptCircles = const [],
+    required this.exceptCircles,
   });
 
   static const _distance = Distance();
@@ -101,9 +101,9 @@ base class NewCirclePainter extends CirclePainter
                       _distance.offset(circle.point, circle.radius, 180)))
               .distance
           : circle.radius;
-      points[circle.color] ??= {};
-      points[circle.color]![radius] ??= [];
-      points[circle.color]![radius]!.add(center);
+      exceptPoints[circle.color] ??= {};
+      exceptPoints[circle.color]![radius] ??= [];
+      exceptPoints[circle.color]![radius]!.add(center);
     }
 
     // Now that all the points are grouped, let's draw them
@@ -126,39 +126,39 @@ base class NewCirclePainter extends CirclePainter
     final paintPoint = Paint()
       ..isAntiAlias = false
       ..strokeCap = StrokeCap.round;
-    // for (final color in pointsFilledBorder.keys) {
-    //   final paint = paintPoint..color = color;
-    //   final pointsByRadius = pointsFilledBorder[color]!;
-    //   for (final radius in pointsByRadius.keys) {
-    //     final pointsByRadiusColor = pointsByRadius[radius]!;
-    //     final radiusPaint = paint..strokeWidth = radius * 2;
-    //     _paintPoints(canvas, pointsByRadiusColor, radiusPaint);
-    //   }
-    // }
+    for (final color in pointsFilledBorder.keys) {
+      final paint = paintPoint..color = color;
+      final pointsByRadius = pointsFilledBorder[color]!;
+      for (final radius in pointsByRadius.keys) {
+        final pointsByRadiusColor = pointsByRadius[radius]!;
+        final radiusPaint = paint..strokeWidth = radius * 2;
+        _paintPoints(canvas, pointsByRadiusColor, radiusPaint);
+      }
+    }
 
+    canvas.saveLayer(null, paintPoint);
     // And then the circle
     for (final color in points.keys) {
       final paint = paintPoint..color = color;
       final pointsByRadius = points[color]!;
       for (final radius in pointsByRadius.keys) {
         final pointsByRadiusColor = pointsByRadius[radius]!;
-        final radiusPaint = paint..strokeWidth = radius * 2
-                                ..blendMode = BlendMode.clear;
-        // final erasePaint = paint..blendMode = BlendMode.clear
-        //                         ..strokeWidth = radius * 2;
+        final radiusPaint = paint..strokeWidth = radius * 2;
         _paintPoints(canvas, pointsByRadiusColor, radiusPaint);
       }
     }
 
-    // for (var color in exceptPoints.keys) {
-    //   final paint = paintPoint..color = color;
-    //   final pointsByRadius = points[color]!;
-    //   for (final radius in pointsByRadius.keys) {
-    //     final pointsByRadiusColor = pointsByRadius[radius]!;
-    //     final radiusPaint = paint..strokeWidth = radius * 2;
-    //     _paintPoints(canvas, pointsByRadiusColor, radiusPaint);
-    //   }
-    // }
+    for (final color in exceptPoints.keys) {
+      final paint = paintPoint..color = color;
+      final pointsByRadiusTest = exceptPoints[color]!;
+      for (final radius in pointsByRadiusTest.keys) {
+        final pointsByRadiusColor = pointsByRadiusTest[radius]!;
+        final radiusPaint = paint..strokeWidth = radius * 2
+                                ..blendMode = BlendMode.clear;
+        _erasePoint(canvas, pointsByRadiusColor, radiusPaint);
+      }
+    }
+    canvas.restore();
   }
 
   void _paintPoints(Canvas canvas, List<Offset> offsets, Paint paint) {
@@ -171,9 +171,6 @@ base class NewCirclePainter extends CirclePainter
 
   void _erasePoint(Canvas canvas, List<Offset> offsets, Paint paint) {
     canvas.drawPoints(PointMode.points, offsets, paint);
-    // canvas.saveLayer(null, paint);
-    // canvas.drawPoints(PointMode.points, offsets, paint);
-    // canvas.restore();
   }
 
   @override

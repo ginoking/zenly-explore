@@ -53,67 +53,30 @@ class MyApp extends StatelessWidget {
                     userAgentPackageName: 'dev.fleaflet.flutter_map.example',
                     // zoomReverse: true
                   ),
-                  // TileLayer(
-                  //   urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                  //   // zoomReverse: true
-                  // ),
-                  // CircleLayer(
-                  //   circles: [
-                  //     CircleMarker(
-                  //         point: snapshot.data,
-                  //         radius: 1000,
-                  //         useRadiusInMeter: true,
-                  //         color: Colors.black.withOpacity(0.5)),
-                  //     CircleMarker(
-                  //         point: snapshot.data,
-                  //         radius: 100,
-                  //         useRadiusInMeter: true,
-                  //         color: Colors.white.withOpacity(0.5)),
-                  //   ],
-                  // ),
-                  // PolylineLayer(
-                  //   polylines: [
-                  //     Polyline(
-                  //       points: [
-                  //         snapshot.data,
-                  //         const LatLng(24.988166709962165, 121.31983249528967),
-                  //         const LatLng(24.988245114232143, 121.31972587749178)
-                  //       ],
-                  //       color: Colors.white.withOpacity(0.3),
-                  //     ),
-                  //   ],
-                  // ),
                   CustomCircleLayer(
                     circles: [
                       CircleMarker(
                         point: snapshot.data,
-                        radius: 100,
-                        useRadiusInMeter: true,
-                        color: Colors.black
+                        radius: 100000,
+                        // useRadiusInMeter: true,
+                        color: Colors.black.withOpacity(0.7)
                       )
                     ],
                     exceptCircles: [
                       CircleMarker(
                         point: snapshot.data,
-                        radius: 10,
+                        radius: 100,
                         useRadiusInMeter: true,
-                        color: Colors.red
+                        color: Colors.transparent // color is not used
+                      ),
+                      const CircleMarker(
+                        point: LatLng(24.99052761433441, 121.3113866653879),
+                        radius: 100,
+                        useRadiusInMeter: true,
+                        color: Colors.transparent // color is not used
                       ),
                     ]
                   ),
-                  // CurrentLocationLayer(
-                  //   style: const LocationMarkerStyle(
-                  //     marker: DefaultLocationMarker(
-                  //       child: Icon(
-                  //         Icons.navigation,
-                  //         color: Colors.white,
-                  //         size: 20.0,
-                  //       ),
-                  //     ),
-                  //     markerSize: Size(30, 30),
-                  //     markerDirection: MarkerDirection.heading,
-                  //   ),
-                  // )
                 ],
               );
             }
@@ -144,7 +107,7 @@ class CustomCircleLayer extends CircleLayer {
     super.key,
     required super.circles,
     super.hitNotifier,
-    this.exceptCircles = const [],
+    required this.exceptCircles,
   });
 
   @override
@@ -155,9 +118,9 @@ class CustomCircleLayer extends CircleLayer {
       child: CustomPaint(
         painter: NewCirclePainter(
           circles: circles,
-          exceptCircles: this.exceptCircles,
           camera: camera,
           hitNotifier: hitNotifier,
+          exceptCircles: exceptCircles,
         ),
         size: Size(camera.size.x, camera.size.y),
         isComplex: true,
