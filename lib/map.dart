@@ -18,6 +18,9 @@ class _MapState extends State<Map> with TickerProviderStateMixin {
   final GPS _gps = GPS();
   late final _animatedMapController = AnimatedMapController(vsync: this);
   double _currentZoom = 15.0;
+  bool init = true;
+
+  List<CircleMarker> points = [];
 
   Position? _userPosition;
   Exception? _exception;
@@ -28,14 +31,27 @@ class _MapState extends State<Map> with TickerProviderStateMixin {
     setState(() {
       _userPosition = position;
     });
+
+    points.add(_createCircleMarker(LatLng(_userPosition!.latitude, _userPosition!.longitude)));
+
+    if (!init) {
+      _animatedMapController.mapController
+          .move(LatLng(position.latitude, position.longitude), _currentZoom);
+    }
+
+    if (init) {
+      init = false;
+    }
   }
 
-  // LatLng? getLatlng(Position? position) {
-  //   if (!position) {
-  //     return null;
-  //   }
-  //   return LatLng(position.latitude, position.longitude);
-  // }
+  CircleMarker _createCircleMarker(LatLng point) {
+    return CircleMarker(
+        point: point,
+        radius: 100,
+        useRadiusInMeter: true,
+        color: Colors.transparent // color is not used
+    );
+  }
 
   @override
   void initState() {
@@ -45,6 +61,14 @@ class _MapState extends State<Map> with TickerProviderStateMixin {
         _exception = e;
       });
     });
+
+    points = [
+      // _createCircleMarker(LatLng(_userPosition!.latitude, _userPosition!.longitude)),
+      _createCircleMarker(const LatLng(24.99052761433441, 121.3113866653879)),
+      _createCircleMarker(const LatLng(24.989151607287504, 121.30797489578778)),
+      _createCircleMarker(const LatLng(24.989579483918508, 121.31011529837208)),
+      _createCircleMarker(const LatLng(24.989404443658554, 121.30943938176651)),
+    ];
   }
 
   @override
@@ -52,77 +76,6 @@ class _MapState extends State<Map> with TickerProviderStateMixin {
     _animatedMapController.dispose();
     super.dispose();
   }
-
-  // Future<Position> _determinePosition() async {
-  //   if (serviceEnabled &&
-  //       permission != LocationPermission.denied &&
-  //       permission != LocationPermission.deniedForever) {
-  //     return await Geolocator.getCurrentPosition(
-  //       desiredAccuracy: LocationAccuracy.best,
-  //     );
-  //   }
-  //   // bool serviceEnabled;
-  //   // LocationPermission permission;
-
-  //   serviceEnabled = await Geolocator.isLocationServiceEnabled();
-  //   if (!serviceEnabled) {
-  //     return Future.error('Location services are disabled.');
-  //   }
-
-  //   permission = await Geolocator.checkPermission();
-  //   if (permission == LocationPermission.denied) {
-  //     permission = await Geolocator.requestPermission();
-  //     if (permission == LocationPermission.denied) {
-  //       return Future.error('Location permissions are denied');
-  //     }
-  //   }
-
-  //   if (permission == LocationPermission.deniedForever) {
-  //     // Android預設若拒絕兩次則會永久關閉(deniedForever)，使用者需至設定中手動開啟
-  //     return Future.error(
-  //         'Location permissions are permanently denied, we cannot request permissions.');
-  //   }
-
-  //   // 如成功取得權限，使用以下function取得位置
-  //   return await Geolocator.getCurrentPosition(
-  //     desiredAccuracy: LocationAccuracy.best,
-  //   );
-  // }
-
-  // Future<LatLng> _latlng() async {
-  //   try {
-  //     final position = await _latlng();
-  //     return LatLng(position.latitude, position.longitude);
-  //   } catch (e) {
-  //     // return const LatLng(23.973875, 120.982024);
-  //     //如出現錯誤則跳出對話方塊提示使用者
-  //     late LatLng _latlng;
-  //     await showDialog(
-  //         context: context,
-  //         builder: (context) => SimpleDialog(
-  //               contentPadding: const EdgeInsets.all(8.0),
-  //               children: [
-  //                 const Text("請開啟定位功能與權限"),
-  //                 TextButton(
-  //                     onPressed: () async {
-  //                       final permission = await Geolocator.requestPermission();
-  //                       if (permission == LocationPermission.deniedForever) {
-  //                         _latlng = const LatLng(23.973875, 120.982024);
-  //                         // 如為deniedForever就直接提供一個預設值
-  //                       } else {
-  //                         final _position =
-  //                             await Geolocator.getCurrentPosition();
-  //                         _latlng =
-  //                             LatLng(_position.latitude, _position.longitude);
-  //                       }
-  //                       Navigator.pop(context);
-  //                     },
-  //                     child: const Text("確定"))
-  //               ],
-  //             ));
-  //     return _latlng;
-  //   }
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -135,10 +88,16 @@ class _MapState extends State<Map> with TickerProviderStateMixin {
     } else {
       // child = Center(child: Text(_userPosition.toString()));
       child = Scaffold(
+        appBar: AppBar(
+          title: Text(
+              "latLng: ${_userPosition!.latitude}, ${_userPosition!.longitude}"),
+        ),
         floatingActionButton: FloatingActionButton(
           child: const Icon(Icons.my_location),
           onPressed: () {
-            _animatedMapController.mapController.move(LatLng(_userPosition!.latitude, _userPosition!.longitude), _currentZoom);
+            _animatedMapController.mapController.move(
+                LatLng(_userPosition!.latitude, _userPosition!.longitude),
+                _currentZoom);
           },
         ),
         body: FlutterMap(
@@ -160,44 +119,16 @@ class _MapState extends State<Map> with TickerProviderStateMixin {
             TileLayer(
               urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
             ),
-            CustomCircleLayer(circles: [
-              CircleMarker(
-                  point: LatLng(_userPosition!.latitude, _userPosition!.longitude),
-                  radius: 100000,
-                  // useRadiusInMeter: true,
-                  color: Colors.black.withOpacity(0.7))
-            ], exceptCircles: [
-              CircleMarker(
-                  point: LatLng(_userPosition!.latitude, _userPosition!.longitude),
-                  radius: 100,
-                  useRadiusInMeter: true,
-                  color: Colors.transparent // color is not used
-                  ),
-              const CircleMarker(
-                  point: LatLng(24.99052761433441, 121.3113866653879),
-                  radius: 100,
-                  useRadiusInMeter: true,
-                  color: Colors.transparent // color is not used
-                  ),
-              const CircleMarker(
-                  point: LatLng(24.989151607287504, 121.30797489578778),
-                  radius: 100,
-                  useRadiusInMeter: true,
-                  color: Colors.transparent // color is not used
-                  ),
-              const CircleMarker(
-                  point: LatLng(24.989579483918508, 121.31011529837208),
-                  radius: 100,
-                  useRadiusInMeter: true,
-                  color: Colors.transparent // color is not used
-                  ),
-              const CircleMarker(
-                  point: LatLng(24.989404443658554, 121.30943938176651),
-                  radius: 100,
-                  useRadiusInMeter: true,
-                  color: Colors.transparent // color is not used
-                  ),
-            ]),
+            CustomCircleLayer(
+              circles: [
+                CircleMarker(
+                    point:
+                        LatLng(_userPosition!.latitude, _userPosition!.longitude),
+                    radius: 100000000,
+                    color: Colors.black.withOpacity(0.7))
+              ], 
+              exceptCircles: points
+            ),
             CurrentLocationLayer(
               style: const LocationMarkerStyle(
                 marker: DefaultLocationMarker(
