@@ -177,3 +177,32 @@ base class NewCirclePainter extends CirclePainter
   bool shouldRepaint(CirclePainter oldDelegate) =>
       circles != oldDelegate.circles || camera != oldDelegate.camera;
 }
+
+class CustomCircleLayer extends CircleLayer {
+  final List<CircleMarker> exceptCircles;
+
+  const CustomCircleLayer({
+    super.key,
+    required super.circles,
+    super.hitNotifier,
+    required this.exceptCircles,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final camera = MapCamera.of(context);
+
+    return MobileLayerTransformer(
+      child: CustomPaint(
+        painter: NewCirclePainter(
+          circles: circles,
+          camera: camera,
+          hitNotifier: hitNotifier,
+          exceptCircles: exceptCircles,
+        ),
+        size: Size(camera.size.x, camera.size.y),
+        isComplex: true,
+      ),
+    );
+  }
+}
