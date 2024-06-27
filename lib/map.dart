@@ -35,8 +35,9 @@ class _MapState extends State<Map> with TickerProviderStateMixin {
     points.add(_createCircleMarker(LatLng(_userPosition!.latitude, _userPosition!.longitude)));
 
     if (!init) {
-      _animatedMapController.mapController
-          .move(LatLng(position.latitude, position.longitude), _currentZoom);
+      _animatedMapController.animateTo(
+        dest: LatLng(position.latitude, position.longitude)
+      );
     }
 
     if (init) {
@@ -95,9 +96,9 @@ class _MapState extends State<Map> with TickerProviderStateMixin {
         floatingActionButton: FloatingActionButton(
           child: const Icon(Icons.my_location),
           onPressed: () {
-            _animatedMapController.mapController.move(
-                LatLng(_userPosition!.latitude, _userPosition!.longitude),
-                _currentZoom);
+            _animatedMapController.animateTo(
+              dest: LatLng(_userPosition!.latitude, _userPosition!.longitude)
+            );
           },
         ),
         body: FlutterMap(
